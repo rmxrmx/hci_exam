@@ -5,7 +5,7 @@ import streamlit as st
 import random
 
 #st.set_page_config(layout="wide")
-wiki_wiki = wp.Wikipedia('da')
+wiki_wiki = wp.Wikipedia('en')
 
 
 def print_sections(sections, level=0):
@@ -25,7 +25,7 @@ def print_categorymembers(categorymembers, level=0, max_level=1):
 
 S = requests.Session()
 
-URL = "https://da.wikipedia.org/w/api.php"
+URL = "https://en.wikipedia.org/w/api.php"
 
 # PARAMS = {
 #     "action": "query",
@@ -100,23 +100,7 @@ URL = "https://da.wikipedia.org/w/api.php"
 
 
 
-# get 10 random pages
-PARAMS = {
-    "action": "query",
-    "format": "json",
-    "list": "random",
-    "rnfilterredir": "nonredirects",
-    "rnlimit": 10,
-    "rnnamespace": 0
-}
 
-R = S.get(url=URL, params=PARAMS)
-pages = R.json()
-
-page_titles = []
-
-for page in pages["query"]["random"]:
-    page_titles.append(page["title"])
 
 # page_extracts = []
 # page_categories = []
@@ -207,7 +191,26 @@ for page in pages["query"]["random"]:
 #     if len(page.sections) >= 5 and c.ns == 0:
 #         big_pages.append(page)
 
+# @st.cache(suppress_st_warning=True)
+# def create_text():
 
+# get 10 random pages
+PARAMS = {
+    "action": "query",
+    "format": "json",
+    "list": "random",
+    "rnfilterredir": "nonredirects",
+    "rnlimit": 10,
+    "rnnamespace": 0
+}
+
+R = S.get(url=URL, params=PARAMS)
+pages = R.json()
+
+page_titles = []
+
+for page in pages["query"]["random"]:
+    page_titles.append(page["title"])
 
 # TODO: make this work for all of them
 page = wiki_wiki.page(page_titles[0])
@@ -215,7 +218,7 @@ max_len = 0
 max_section = ""
 max_title = ""
 for section in page.sections:
-    if len(section.text) > max_len and section.title != "Eksterne henvisninger":
+    if len(section.text) > max_len:
         max_len = len(section.text)
         max_section = section.text
         max_title = section.title
@@ -225,10 +228,29 @@ for section in page.sections:
 words = max_section.split()
 
 chosen_words = random.sample(range(len(words)), 5)
+chosen_words.sort()
+
+removed_words = [words[i] for i in chosen_words]
+
+for i, index in enumerate(chosen_words):
+    words[index] = str(i+1) + ".___"
+
+col1, col2 = st.columns(2)
+random.shuffle(removed_words)
 
 
-st.subheader(page.title + " / " + max_title)
-st.write(words)
+words = " ".join(words)
+
+
+col1.subheader(page.title + " / " + max_title)
+col1.write(words)
+
+form = col2.form("my_form")
+
+for word in removed_words:
+    form.number_input(word, 1, 5, step=1, format="%i", key=word)
+
+form.form_submit_button("Submit")
 # for i in chosen:
 #     page = wiki_wiki.page(titles[i])
 
