@@ -20,6 +20,10 @@ hide_table_row_index = """
 # Inject CSS with Markdown
 st.markdown(hide_table_row_index, unsafe_allow_html=True)
 
+
+green = "#07BB9C"
+yellow = "#FFD743"
+red = "#D773A2"
 # index == the 10 pages for questions / answers
 # page:
 #   0: starting page
@@ -109,7 +113,7 @@ def generate_page(index, language, number):
     removed_words_index = [0, 1, 2, 3, 4]
 
     for i, idx in enumerate(chosen_words):
-        words[idx] = "<font color='#fbe7c6'>" + str(i+1) + ".\_\_\_</font>"
+        words[idx] = "<font color='{}'>".format(yellow) + str(i+1) + ".\_\_\_</font>"
 
     random.shuffle(removed_words_index)
 
@@ -140,10 +144,10 @@ def update_page():
     results = 0
     for i in range(5):
         if st.session_state[str(index) + str(i)] == removed_words_index[i] + 1:
-            words[chosen_words[removed_words_index[i]]] = "<font color='#b4f8c8'>" + removed_words[removed_words_index[i]] + "</font>"
+            words[chosen_words[removed_words_index[i]]] = "<font color='{}'>".format(green) + removed_words[removed_words_index[i]] + "</font>"
             results += 1
         else:
-            words[chosen_words[removed_words_index[i]]] = "<font color='#ffaebc'>~~" + removed_words[st.session_state[str(index) + str(i)] - 1] + "~~ " + removed_words[removed_words_index[i]] + "</font>"        
+            words[chosen_words[removed_words_index[i]]] = "<font color='{}'>~~".format(red) + removed_words[st.session_state[str(index) + str(i)] - 1] + "~~ " + removed_words[removed_words_index[i]] + "</font>"        
     
 
     j_w = " ".join(words)
@@ -187,11 +191,11 @@ if st.session_state["page"] == 2:
     col4.markdown(st.session_state[index][0], True)
 
     if total_score >= 40:
-        color = "#b4f8c8"
+        color = green
     elif total_score <= 20:
-        color = "#ffaebc"
+        color = red
     else:
-        color = "#fbe7c6"
+        color = yellow
 
     col5.subheader("Results:")
     col5.markdown("<p style='font-family:sans-serif; color:{}; font-size: 24px;'>Total score: {} / 50, or {}%</p>".format(color, total_score, int(100 * total_score / 50)), True)
