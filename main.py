@@ -5,6 +5,20 @@ import requests
 import wikipediaapi as wp
 import streamlit as st
 import random
+import pandas as pd
+
+
+
+# CSS to inject contained in a string
+hide_table_row_index = """
+            <style>
+            tbody th {display:none}
+            .blank {display:none}
+            </style>
+            """
+
+# Inject CSS with Markdown
+st.markdown(hide_table_row_index, unsafe_allow_html=True)
 
 # index == the 10 pages for questions / answers
 # page:
@@ -19,37 +33,29 @@ if "results" not in st.session_state:
     st.session_state["results"] = []
 if "game_number" not in st.session_state:
     st.session_state["game_number"] = 0
+if "titles" not in st.session_state:
+    st.session_state["titles"] = []
 
+st.title("Learning languages with Wikipedia")
 
 def advance_game():
     st.session_state["page"] += 1
-    if "lang" not in st.session_state:
+    if "language" in st.session_state:
         st.session_state["lang"] = st.session_state["language"]
     st.session_state["index"] = 0
 
 if st.session_state["page"] == 0:
-    st.title("Learning with Wikipedia!")
-    st.selectbox("Language", ["en", "da", "de", "ru"], key="language")
-    st.button("Start", on_click=advance_game)
+    st.subheader("Instructions")
+    st.write("You will be presented with 10 summaries from Wikipedia of the language of your choice. Five words from each summary will be removed, and it is your task to place them in the correct locations in the text. Select the language to train and press Start to begin.")
+    
+    col1, col2, col3, col4, col5 = st.columns([1, 2, 1, 2, 1])
+    col2.selectbox("Language", ["en", "da", "de", "lt", "ru"], key="language")
+    col4.button("Start", on_click=advance_game)
 
 
 if st.session_state["page"] == 1:
     language = st.session_state["lang"]
     wiki_wiki = wp.Wikipedia(language)
-
-
-def print_sections(sections, level=0):
-        for s in sections:
-                print("%s: %s - %s" % ("*" * (level + 1), s.title, s.text))
-
-
-def print_categorymembers(categorymembers, level=0, max_level=1):
-        for c in categorymembers.values():
-            print("%s: %s (ns: %d)" % ("*" * (level + 1), c.title, c.ns))
-            if c.ns == wp.Namespace.CATEGORY and level < max_level:
-                print_categorymembers(c.categorymembers, level=level + 1, max_level=max_level)
-
-
 
 S = requests.Session()
 
@@ -67,31 +73,33 @@ PARAMS = {
     "rnnamespace": 0
 }
 
-@st.cache(allow_output_mutation=True)
+@st.cache(allow_output_mutation=True, show_spinner=False)
 def get_pages(language, number):
-    URL = "https://" + language + ".wikipedia.org/w/api.php"
-    R = S.get(url=URL, params=PARAMS)
-    pages = R.json()
-    
-    page_summaries = []
-    page_titles = []
+    with st.spinner("Loading..."):
+        URL = "https://" + language + ".wikipedia.org/w/api.php"
+        R = S.get(url=URL, params=PARAMS)
+        pages = R.json()
+        
+        page_summaries = []
+        page_titles = []
 
-    for idx, page in enumerate(pages["query"]["random"]):
-        wiki_page = wiki_wiki.page(page["title"])
-        # TODO: might want to do some more extensive splitting
-        page_summaries.append(wiki_page.summary.split()[:200])
-        page_titles.append(str(idx + 1) + ". " + page["title"])
+        for idx, page in enumerate(pages["query"]["random"]):
+            wiki_page = wiki_wiki.page(page["title"])
+            # TODO: might want to do some more extensive splitting
+            page_summaries.append(wiki_page.summary.split()[:200])
+            page_titles.append(str(idx + 1) + ". " + page["title"])
 
     return page_titles, page_summaries
 
 if st.session_state["page"] == 1:
     titles, summaries = get_pages(language, st.session_state["game_number"])
+    st.session_state["titles"] = titles
 
 
 index = st.session_state['index']
 
 @st.cache(allow_output_mutation=True)
-def generate_page(index):
+def generate_page(index, language, number):
     words = summaries[index].copy()
     print("ran")
     chosen_words = random.sample(range(len(words)), 5)
@@ -101,7 +109,7 @@ def generate_page(index):
     removed_words_index = [0, 1, 2, 3, 4]
 
     for i, idx in enumerate(chosen_words):
-        words[idx] = "<font color='orange'>" + str(i+1) + ".\_\_\_</font>"
+        words[idx] = "<font color='#fbe7c6'>" + str(i+1) + ".\_\_\_</font>"
 
     random.shuffle(removed_words_index)
 
@@ -111,7 +119,7 @@ def generate_page(index):
     return removed_words, removed_words_index, joined_words, words, chosen_words
 
 if st.session_state["page"] == 1:
-    removed_words, removed_words_index, joined_words, words, chosen_words = generate_page(index)
+    removed_words, removed_words_index, joined_words, words, chosen_words = generate_page(index, language, st.session_state["game_number"])
 
 
     col1.subheader(titles[index])
@@ -132,10 +140,10 @@ def update_page():
     results = 0
     for i in range(5):
         if st.session_state[str(index) + str(i)] == removed_words_index[i] + 1:
-            words[chosen_words[removed_words_index[i]]] = "<font color='green'>" + removed_words[removed_words_index[i]] + "</font>"
+            words[chosen_words[removed_words_index[i]]] = "<font color='#b4f8c8'>" + removed_words[removed_words_index[i]] + "</font>"
             results += 1
         else:
-            words[chosen_words[removed_words_index[i]]] = "<font color='red'>~~" + removed_words[st.session_state[str(index) + str(i)] - 1] + "~~ " + removed_words[removed_words_index[i]] + "</font>"        
+            words[chosen_words[removed_words_index[i]]] = "<font color='#ffaebc'>~~" + removed_words[st.session_state[str(index) + str(i)] - 1] + "~~ " + removed_words[removed_words_index[i]] + "</font>"        
     
 
     j_w = " ".join(words)
@@ -159,6 +167,8 @@ def start_again():
     st.session_state['page'] = 0
     st.session_state['index'] = 0
     st.session_state["game_number"] += 1
+    st.session_state["results"] = []
+    st.session_state["titles"] = []
 
 if st.session_state["page"] == 1:
     if index != 9:
@@ -176,8 +186,20 @@ if st.session_state["page"] == 2:
     col4.subheader(st.session_state[index][1])
     col4.markdown(st.session_state[index][0], True)
 
+    if total_score >= 40:
+        color = "#b4f8c8"
+    elif total_score <= 20:
+        color = "#ffaebc"
+    else:
+        color = "#fbe7c6"
+
     col5.subheader("Results:")
-    col5.write("Total score: {} / 50, or {}%".format(total_score, int(100 * total_score / 50)))
+    col5.markdown("<p style='font-family:sans-serif; color:{}; font-size: 24px;'>Total score: {} / 50, or {}%</p>".format(color, total_score, int(100 * total_score / 50)), True)
+    res = []
+
+    df = pd.DataFrame(zip(st.session_state["titles"], st.session_state["results"]), columns=["Text", "Correct Answers"])#.style.highlight_between(left=1.5, right=3.5, props='font-weight:bold;color:#e83e8c')
+
+    col5.table(df)
 
     col1, col2, col3 = st.columns([1, 1, 4])
     if st.session_state['index'] != 0:
@@ -191,16 +213,17 @@ if st.session_state["page"] == 2:
 # TODO:
 
 # 1. Make an intro page, where you can choose:
-# language, optionally: category
+
 
 # 2. in the game:
-# upon submission, allow user to go through their results
 # show some stats
-# button to play again
+# colour them?
 # share?
 # high scores?
 
-# have a timer
+# link to the page
+
+# add a loading thing
 
 # VISUAL considerations
 
