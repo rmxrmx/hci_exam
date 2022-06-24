@@ -7,7 +7,19 @@ import streamlit as st
 import random
 import pandas as pd
 
-
+def language_converter(lang):
+    if lang == "English":
+        return "en"
+    elif lang == "Danish":
+        return "da"
+    elif lang == "German":
+        return "de"
+    elif lang == "Lithuanian":
+        return "lt"
+    elif lang == "Russian":
+        return "ru"
+    elif lang == "Chinese":
+        return "zh"
 
 # CSS to inject contained in a string
 hide_table_row_index = """
@@ -40,12 +52,12 @@ if "game_number" not in st.session_state:
 if "titles" not in st.session_state:
     st.session_state["titles"] = []
 
-st.title("Learning languages with Wikipedia")
+st.title("Learning Languages With Wikipedia")
 
 def advance_game():
     st.session_state["page"] += 1
     if "language" in st.session_state:
-        st.session_state["lang"] = st.session_state["language"]
+        st.session_state["lang"] = language_converter(st.session_state["language"])
     st.session_state["index"] = 0
 
 if st.session_state["page"] == 0:
@@ -53,7 +65,7 @@ if st.session_state["page"] == 0:
     st.write("You will be presented with 10 summaries from Wikipedia of the language of your choice. Five words from each summary will be removed, and it is your task to place them in the correct locations in the text. Select the language to train and press Start to begin.")
     
     col1, col2, col3, col4, col5 = st.columns([1, 2, 1, 2, 1])
-    col2.selectbox("Language", ["en", "da", "de", "lt", "ru"], key="language")
+    col2.selectbox("Language", ["English", "Danish", "German", "Lithuanian", "Russian", "Chinese"], key="language")
     col4.button("Start", on_click=advance_game)
 
 
