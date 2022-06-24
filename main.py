@@ -102,7 +102,7 @@ def get_pages(language, number):
         for idx, page in enumerate(pages["query"]["random"]):
             wiki_page = wiki_wiki.page(page["title"])
             # TODO: might want to do some more extensive splitting
-            page_summaries.append(wiki_page.summary.split()[:200])
+            page_summaries.append(wiki_page.summary.split()[:150])
             page_titles.append(str(idx + 1) + ". " + page["title"])
 
     return page_titles, page_summaries
