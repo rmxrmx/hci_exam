@@ -21,9 +21,9 @@ hide_table_row_index = """
 st.markdown(hide_table_row_index, unsafe_allow_html=True)
 
 
-green = "#07BB9C"
-yellow = "#FFD743"
-red = "#D773A2"
+green = "#adc178"
+yellow = "#CB9F5D"
+red = "#ff4d6d"
 # index == the 10 pages for questions / answers
 # page:
 #   0: starting page
@@ -113,7 +113,7 @@ def generate_page(index, language, number):
     removed_words_index = [0, 1, 2, 3, 4]
 
     for i, idx in enumerate(chosen_words):
-        words[idx] = "<font color='{}'>".format(yellow) + str(i+1) + ".\_\_\_</font>"
+        words[idx] = "<font color='{}'>**".format(yellow) + str(i+1) + ".\_\_\_**</font>"
 
     random.shuffle(removed_words_index)
 
@@ -144,10 +144,10 @@ def update_page():
     results = 0
     for i in range(5):
         if st.session_state[str(index) + str(i)] == removed_words_index[i] + 1:
-            words[chosen_words[removed_words_index[i]]] = "<font color='{}'>".format(green) + removed_words[removed_words_index[i]] + "</font>"
+            words[chosen_words[removed_words_index[i]]] = "<font color='{}'>**".format(green) + removed_words[removed_words_index[i]] + "**</font>"
             results += 1
         else:
-            words[chosen_words[removed_words_index[i]]] = "<font color='{}'>~~".format(red) + removed_words[st.session_state[str(index) + str(i)] - 1] + "~~ " + removed_words[removed_words_index[i]] + "</font>"        
+            words[chosen_words[removed_words_index[i]]] = "<font color='{}'>**~~".format(red) + removed_words[st.session_state[str(index) + str(i)] - 1] + "~~ " + removed_words[removed_words_index[i]] + "**</font>"        
     
 
     j_w = " ".join(words)
@@ -198,7 +198,7 @@ if st.session_state["page"] == 2:
         color = yellow
 
     col5.subheader("Results:")
-    col5.markdown("<p style='font-family:sans-serif; color:{}; font-size: 24px;'>Total score: {} / 50, or {}%</p>".format(color, total_score, int(100 * total_score / 50)), True)
+    col5.markdown("<p style='font-family:sans-serif; color:{}; font-size: 20px;'><strong>Total score: {} / 50, or {}%</strong></p>".format(color, total_score, int(100 * total_score / 50)), True)
     res = []
 
     df = pd.DataFrame(zip(st.session_state["titles"], st.session_state["results"]), columns=["Text", "Correct Answers"])#.style.highlight_between(left=1.5, right=3.5, props='font-weight:bold;color:#e83e8c')
